@@ -34,7 +34,7 @@ var assertFileExists = function(infile) {
     var instr = infile.toString();
     if(!fs.existsSync(instr)) {
         console.log("%s does not exist. Exiting.", instr);
-        process.exit(1); 
+        process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
     }
     return instr;
 };
@@ -44,9 +44,8 @@ var assertUrlExists = function(urlpath) {
     rest.get(path).on('complete',function(result) {
 	fs.writeFileSync(HTMLFILE_DEFAULT,result);
     });
-    return assertFileExists(HTMLFILE_DEFAULT);
+  
 };
-
 
 var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
@@ -75,18 +74,19 @@ var clone = function(fn) {
 
 if(require.main == module) {
     program
-        .option('-c, --checks &lt;check_file&gt;', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-        .option('-f, --file &lt;html_file&gt;', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-/*        .option('-u, --url &lt;url_path&gt;','Path to URL', clone(assertUrlExists), URL_DEFAULT)*/
-        .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
+        .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+        .option('-u, --url <url_file>','Path to Url',clone(assertUrlExists))
+	.parse(process.argv);
+    if(typeof(program.url)=="undefined") {
+      var checkJson = checkHtmlFile(program.file, program.checks);
+    }
+    else {   
+ 
+      var checkJson = checkHtmlFile(HTMLFILE_DEFAULT,program.checks);
+    }	
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
-
-
-/*rest.get('http://mysterious-dusk-8912.herokuapp.com').on('complete',function(result) { 
-    fs.writeFileSync("index.html",result);  
-});*/
